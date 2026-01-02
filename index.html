@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SWOT Analyzer</title>
+  <style>
+    :root{
+      --bg:#ffffff;
+      --card:#ffffff;
+      --card2:#fafafa;
+      --text:#111111;
+      --muted:#5f6368;
+      --line:#e6e6e6;
+      --accent:#111111;
+
+      /* Pastel quadrant accents (soft, distinct) */
+      --s:#c9f2d5;  /* mint */
+      --w:#ffd1d6;  /* blush */
+      --o:#cfe7ff;  /* sky */
+      --t:#ffe7b8;  /* sand */
+
+      --s-ink:#0b5a2a;
+      --w-ink:#7a1c2a;
+      --o-ink:#0e3f74;
+      --t-ink:#6a4600;
+
+      --shadow: 0 10px 30px rgba(0,0,0,.10);
+      --radius: 14px;
+      --radius2: 10px;
+      --pad: 14px;
+      --max: 1100px;
+      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:var(--font);
+      background: var(--bg);
+      color:var(--text);
+    }
+    a{color:inherit}
+    .wrap{max-width:var(--max); margin:0 auto; padding:16px}
+    header{
+      position:sticky; top:0; z-index:20;
+      background: rgba(255,255,255,.85);
+      backdrop-filter: blur(10px);
+      border-bottom:1px solid var(--line);
+    }
+    .topbar{display:flex; gap:12px; align-items:center; justify-content:space-between; padding:14px 16px; max-width:var(--max); margin:0 auto}
+    .titlebox{display:flex; flex-direction:column; gap:6px; min-width: 0; flex: 1;}
+    .titleline{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .title{
+      font-size:18px; font-weight:700; letter-spacing:.2px;
+      display:flex; gap:10px; align-items:center;
+    }
+    .badge{font-size:12px; color:var(--muted); border:1px solid var(--line); padding:3px 8px; border-radius:999px; background: rgba(255,255,255,.03)}
+    .field{
+      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+      color:var(--muted); font-size:12px;
+    }
+    .field input{
+      background:transparent; border:1px solid var(--line); color:var(--text);
+      padding:8px 10px; border-radius:10px; width: min(520px, 100%);
+      outline:none;
+    }
+    .field input:focus{border-color: rgba(255,255,255,.35); box-shadow: 0 0 0 4px rgba(0,0,0,.08)}
+    .actions{display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end}
+    button, .btn{
+      background: rgba(0,0,0,.03);
+      color: var(--text);
+      border:1px solid var(--line);
+      padding:9px 10px;
+      border-radius: 12px;
+      font-size: 13px;
+      cursor:pointer;
+      transition: transform .05s ease, background .15s ease, border-color .15s ease;
+      display:inline-flex; align-items:center; gap:8px;
+      user-select:none;
+    }
+    button:hover,.btn:hover{background: rgba(0,0,0,.05); border-color: rgba(0,0,0,.18)}
+    button:active,.btn:active{transform: translateY(1px)}
+    button.primary{
+      background: rgba(0,0,0,.07);
+      border-color: rgba(0,0,0,.22);
+    }
+    button.danger{background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.18)}
+    .mini{
+      padding:7px 9px;
+      border-radius: 10px;
+      font-size: 12px;
+      gap:6px;
+    }
+    .toggle{
+      display:flex; gap:10px; align-items:center; justify-content:flex-end;
+      color:var(--muted); font-size:12px;
+    }
+    .toggle input{transform: translateY(1px)}
+    main{padding:16px 0 48px}
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:14px;
+    }
+    @media (min-width: 920px){
+      .grid{grid-template-columns: 1fr 1fr}
+    }
+    .panel{
+      background: var(--card);
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .panelhead{
+      display:flex; align-items:center; justify-content:space-between;
+      padding: 12px 12px;
+      border-bottom:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.04), transparent);
+    }
+    .panelhead h2{
+      margin:0; font-size:13px; letter-spacing:.6px; text-transform:uppercase;
+      display:flex; align-items:center; gap:10px;
+    }
+    .dot{
+      width:10px; height:10px; border-radius:50%;
+      background: var(--s);
+      box-shadow: 0 0 0 4px rgba(0,0,0,.05);
+    }
+    .dot.w{background: var(--w); box-shadow: 0 0 0 4px rgba(0,0,0,.05)}
+    .dot.o{background: var(--o); box-shadow: 0 0 0 4px rgba(0,0,0,.05)}
+    .dot.t{background: var(--t); box-shadow: 0 0 0 4px rgba(0,0,0,.05)}
+    .panelbody{padding:10px}
+    .item{
+      background: rgba(0,0,0,.02);
+      border:1px solid var(--line);
+      border-radius: var(--radius2);
+      padding: 8px;
+      margin-bottom: 10px;
+    }
+    .item:last-child{margin-bottom:0}
+    .row{display:flex; gap:10px; align-items:flex-start}
+    .grow{flex:1}
+    textarea{
+      width:100%;
+      min-height: 56px;
+      resize: vertical;
+      background: transparent;
+      border:1px solid rgba(255,255,255,.08);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 10px;
+      outline:none;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    textarea:focus{border-color: rgba(255,255,255,.35); box-shadow: 0 0 0 4px rgba(0,0,0,.08)}
+    .tools{display:flex; flex-direction:column; gap:6px; align-items:stretch}
+    .scores{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap:6px;
+      margin-top:8px;
+    }
+    .scorebox{
+      border:1px solid rgba(255,255,255,.08);
+      background: var(--card2);
+      border-radius: 12px;
+      padding: 8px 10px;
+    }
+    .scorebox label{display:block; font-size:10px; color:var(--muted); margin-bottom:4px}
+    .scorebox input{
+      width:100%;
+      background:transparent;
+      border:1px solid rgba(255,255,255,.10);
+      color:var(--text);
+      border-radius: 10px;
+      padding: 8px;
+      outline:none;
+      font-size: 13px;
+    }
+    .scorebox input:focus{border-color: rgba(255,255,255,.35); box-shadow: 0 0 0 4px rgba(0,0,0,.08)}
+    .meta{
+      display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;
+      margin-top:8px; color:var(--muted); font-size:12px;
+    }
+    .pill{
+      border:1px solid rgba(255,255,255,.10);
+      padding: 6px 8px;
+      border-radius:999px;
+      background: rgba(255,255,255,.03);
+      font-family: var(--mono);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+    .hint{color:var(--muted); font-size:12px; line-height:1.35}
+    .two{
+      display:grid; grid-template-columns: 1fr;
+      gap:14px;
+      margin-top:14px;
+    }
+    @media (min-width: 920px){
+      .two{grid-template-columns: 1fr 1fr}
+    }
+    .summary{
+      background: var(--card);
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px;
+      box-shadow: var(--shadow);
+    }
+    .summary h3{margin:0 0 8px; font-size:13px; letter-spacing:.5px; text-transform:uppercase}
+    .kpis{
+      display:grid; grid-template-columns: repeat(2, 1fr);
+      gap:10px;
+    }
+    @media (min-width: 540px){
+      .kpis{grid-template-columns: repeat(4, 1fr)}
+    }
+    .kpi{
+      border:1px solid rgba(255,255,255,.08);
+      background: var(--card2);
+      border-radius: 14px;
+      padding: 10px;
+    }
+    .kpi .n{font-size:18px; font-weight:800}
+    .kpi .l{font-size:11px; color:var(--muted); margin-top:4px}
+    .list{
+      margin-top: 10px;
+      border-top:1px dashed rgba(255,255,255,.10);
+      padding-top: 10px;
+    }
+    .list ul{margin:0; padding-left: 18px; color: var(--text)}
+    .list li{margin: 7px 0; color: var(--text)}
+    .smallmuted{color:var(--muted); font-size:12px}
+    .footer{
+      margin-top:18px; color:var(--muted); font-size:12px;
+      display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;
+    }
+    .kbd{
+      font-family: var(--mono);
+      font-size: 11px;
+      border:1px solid rgba(255,255,255,.10);
+      border-bottom-color: rgba(255,255,255,.18);
+      background: rgba(0,0,0,.25);
+      padding: 3px 6px;
+      border-radius: 8px;
+      display:inline-block;
+      margin-left:6px;
+    }
+    dialog{
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,.98);
+      color: var(--text);
+      width: min(720px, calc(100% - 24px));
+      box-shadow: var(--shadow);
+    }
+    dialog::backdrop{background: rgba(0,0,0,.55)}
+    .modalhead{display:flex; justify-content:space-between; align-items:center; gap:10px; padding: 14px 14px 8px}
+    .modalhead h3{margin:0; font-size:14px; letter-spacing:.4px; text-transform:uppercase}
+    .modalbody{padding: 0 14px 14px}
+    .modalbody p,.modalbody li{color: var(--text); line-height:1.45}
+    .modalbody .muted{color: var(--muted)}
+    .note{
+      border:1px solid rgba(0,0,0,.10);
+      background: rgba(0,0,0,.03);
+      padding: 10px 12px;
+      border-radius: 14px;
+      margin: 12px 0;
+      color: var(--text);
+    }
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: 14px;
+      transform: translateX(-50%);
+      padding: 10px 12px;
+      border-radius: 14px;
+      border:1px solid rgba(0,0,0,.10);
+      background: rgba(255,255,255,.92);
+      box-shadow: var(--shadow);
+      color: var(--text);
+      font-size: 12px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s ease, transform .2s ease;
+      z-index: 50;
+      max-width: min(720px, calc(100% - 24px));
+    }
+    .toast.show{opacity:1; transform: translateX(-50%) translateY(-2px)}
+    .mutedline{color: var(--muted)}
+    .sep{height:1px; background: rgba(255,255,255,.07); margin: 12px 0}
+    .sr{position:absolute; left:-9999px}
+  
+    @media (max-width: 740px){
+      .topbar{flex-direction:column; align-items:stretch}
+      .actions{justify-content:flex-start}
+      .field{width:100%}
+      .field input{width:100%}
+    }
+    
+    /* Quadrant accents (subtle) */
+    #panel-s .panelhead{background: linear-gradient(180deg, rgba(201,242,213,.75), rgba(255,255,255,0));}
+    #panel-w .panelhead{background: linear-gradient(180deg, rgba(255,209,214,.75), rgba(255,255,255,0));}
+    #panel-o .panelhead{background: linear-gradient(180deg, rgba(207,231,255,.80), rgba(255,255,255,0));}
+    #panel-t .panelhead{background: linear-gradient(180deg, rgba(255,231,184,.80), rgba(255,255,255,0));}
+
+    #panel-s{border-color: #e3f6ea;}
+    #panel-w{border-color: #ffe3e6;}
+    #panel-o{border-color: #e3f0ff;}
+    #panel-t{border-color: #fff1d6;}
+
+    /* Slight accent strip */
+    #panel-s .panelhead{border-left: 6px solid var(--s);}
+    #panel-w .panelhead{border-left: 6px solid var(--w);}
+    #panel-o .panelhead{border-left: 6px solid var(--o);}
+    #panel-t .panelhead{border-left: 6px solid var(--t);}
+
+    /* Make quadrant headings slightly tinted (still black text) */
+    #panel-s h2{color: var(--s-ink);}
+    #panel-w h2{color: var(--w-ink);}
+    #panel-o h2{color: var(--o-ink);}
+    #panel-t h2{color: var(--t-ink);}
+
+    /* Mobile compact scores */
+    @media (max-width: 520px){
+      .scores{grid-template-columns: repeat(2, minmax(0,1fr));}
+    }
+    </style>
+</head>
+<body>
+<header>
+  <div class="topbar" role="banner">
+    <div class="titlebox">
+      <div class="titleline">
+        <div class="title">SWOT Analyzer <span class="badge">single-file</span></div>
+      </div>
+      <div class="field">
+        <span class="mutedline">Project</span>
+        <input id="projectName" type="text" placeholder="e.g., New Product Launch (Q1 2026)" autocomplete="off" />
+      </div>
+    </div>
+
+    <div class="actions" role="toolbar" aria-label="Actions">
+      <div class="toggle" title="Enable scoring to prioritize items">
+        <label><input id="scoringToggle" type="checkbox" /> Prioritize (scores)</label>
+      </div>
+      <button class="primary" id="helpBtn" title="How to use (H)">Help <span class="kbd">H</span></button>
+      <button id="printBtn" title="Print or Save as PDF">Print/PDF</button>
+      <button id="exportBtn" title="Export SWOT as JSON">Export</button>
+      <button id="importBtn" title="Import SWOT from JSON">Import</button>
+      <button class="danger" id="resetBtn" title="Start fresh">Reset</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap" role="main">
+  <div class="hint">
+    Write clear, specific statements. Turn on <b>Prioritize (scores)</b> when you want numeric ranking.
+    Everything auto-saves in your browser.
+  </div>
+
+  <section class="grid" aria-label="SWOT Grid">
+    <div class="panel" id="panel-s">
+      <div class="panelhead">
+        <h2><span class="dot"></span> Strengths</h2>
+        <button class="mini" data-add="S" title="Add Strength">+ Add</button>
+      </div>
+      <div class="panelbody" data-list="S"></div>
+    </div>
+
+    <div class="panel" id="panel-w">
+      <div class="panelhead">
+        <h2><span class="dot w"></span> Weaknesses</h2>
+        <button class="mini" data-add="W" title="Add Weakness">+ Add</button>
+      </div>
+      <div class="panelbody" data-list="W"></div>
+    </div>
+
+    <div class="panel" id="panel-o">
+      <div class="panelhead">
+        <h2><span class="dot o"></span> Opportunities</h2>
+        <button class="mini" data-add="O" title="Add Opportunity">+ Add</button>
+      </div>
+      <div class="panelbody" data-list="O"></div>
+    </div>
+
+    <div class="panel" id="panel-t">
+      <div class="panelhead">
+        <h2><span class="dot t"></span> Threats</h2>
+        <button class="mini" data-add="T" title="Add Threat">+ Add</button>
+      </div>
+      <div class="panelbody" data-list="T"></div>
+    </div>
+  </section>
+
+  <section class="two" aria-label="Insights">
+    <div class="summary" id="summaryBox">
+      <h3>Summary</h3>
+      <div class="kpis" id="kpis"></div>
+      <div class="list">
+        <div class="smallmuted">Top items (based on score if enabled; otherwise your order)</div>
+        <ul id="topItems"></ul>
+      </div>
+      <div class="footer">
+        <span>Autosave: <span id="saveState">on</span></span>
+        <span>Keyboard: <span class="kbd">H</span> help · <span class="kbd">Ctrl</span>+<span class="kbd">S</span> export</span>
+      </div>
+    </div>
+
+    <div class="summary" id="towsBox">
+      <h3>Strategy (TOWS)</h3>
+      <div class="smallmuted">Auto-generated strategy prompts based on your top items.</div>
+      <div class="sep"></div>
+      <div class="list">
+        <div class="smallmuted"><b>SO</b> (use Strengths to win Opportunities)</div>
+        <ul id="soList"></ul>
+      </div>
+      <div class="list">
+        <div class="smallmuted"><b>ST</b> (use Strengths to reduce Threats)</div>
+        <ul id="stList"></ul>
+      </div>
+      <div class="list">
+        <div class="smallmuted"><b>WO</b> (fix Weaknesses to unlock Opportunities)</div>
+        <ul id="woList"></ul>
+      </div>
+      <div class="list">
+        <div class="smallmuted"><b>WT</b> (minimize Weaknesses to avoid Threats)</div>
+        <ul id="wtList"></ul>
+      </div>
+    </div>
+  </section>
+
+  <dialog id="helpModal" aria-label="Help">
+    <div class="modalhead">
+      <h3>How to use</h3>
+      <button class="mini" id="closeHelp">Close</button>
+    </div>
+    <div class="modalbody">
+      <p class="muted">
+        This is a minimalist SWOT + TOWS tool. It works offline and stores data in your browser (localStorage).
+      </p>
+
+      <div class="note">
+        <b>Best (in practice):</b> Write qualitative statements <i>and</i> optionally score them to rank what matters most.
+        That’s why scoring is a toggle—use it when you need prioritization.
+      </div>
+
+      <ol>
+        <li>Type your <b>Project</b> name.</li>
+        <li>Add items to each quadrant (Strengths/Weaknesses/Opportunities/Threats).</li>
+        <li>If you want ranking, enable <b>Prioritize (scores)</b> and set:
+          <ul>
+            <li><b>Impact</b> (1–5): how much it changes outcomes</li>
+            <li><b>Confidence</b> (1–5): how sure you are this is true</li>
+            <li><b>Urgency</b> (1–5): how time-sensitive it is</li>
+          </ul>
+          Score = <span style="font-family:var(--mono)">Impact × Confidence + Urgency</span> (simple, transparent).
+        </li>
+        <li>Use <b>Strategy (TOWS)</b> prompts to generate action ideas—then edit them into real initiatives.</li>
+        <li><b>Export</b> to save/share; <b>Import</b> to continue on another device.</li>
+        <li><b>Print/PDF</b> to create a clean report (use your browser’s “Save as PDF”).</li>
+      </ol>
+
+      <p class="muted">
+        Tip: Keep each item <b>one idea only</b> and as concrete as possible (who/what/why/metric).
+      </p>
+    </div>
+  </dialog>
+
+  <input class="sr" id="fileInput" type="file" accept="application/json" />
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</main>
+
+<script>
+/* =========================
+   SWOT Analyzer (single file)
+   - Offline
+   - Autosave to localStorage
+   - Optional scoring + ranking
+   - TOWS suggestions
+   ========================= */
+
+const STORAGE_KEY = "swot_app_v1";
+const DEFAULT_STATE = () => ({
+  projectName: "",
+  scoringEnabled: true,
+  items: {
+    S: [newItem("S")],
+    W: [newItem("W")],
+    O: [newItem("O")],
+    T: [newItem("T")]
+  }
+});
+
+function uid() {
+  return Math.random().toString(16).slice(2) + Date.now().toString(16);
+}
+
+function clamp(n, min, max) {
+  n = Number(n);
+  if (Number.isNaN(n)) return min;
+  return Math.min(max, Math.max(min, n));
+}
+
+function scoreOf(it) {
+  // Transparent formula: Impact × Confidence + Urgency
+  const impact = clamp(it.impact ?? 3, 1, 5);
+  const conf   = clamp(it.confidence ?? 3, 1, 5);
+  const urg    = clamp(it.urgency ?? 3, 1, 5);
+  return impact * conf + urg;
+}
+
+function newItem(type) {
+  return {
+    id: uid(),
+    type,
+    text: "",
+    impact: 3,
+    confidence: 3,
+    urgency: 3,
+    createdAt: Date.now()
+  };
+}
+
+let state = loadState();
+
+const els = {
+  projectName: document.getElementById("projectName"),
+  scoringToggle: document.getElementById("scoringToggle"),
+  exportBtn: document.getElementById("exportBtn"),
+  importBtn: document.getElementById("importBtn"),
+  printBtn: document.getElementById("printBtn"),
+  resetBtn: document.getElementById("resetBtn"),
+  fileInput: document.getElementById("fileInput"),
+  saveState: document.getElementById("saveState"),
+
+  kpis: document.getElementById("kpis"),
+  topItems: document.getElementById("topItems"),
+  soList: document.getElementById("soList"),
+  stList: document.getElementById("stList"),
+  woList: document.getElementById("woList"),
+  wtList: document.getElementById("wtList"),
+
+  helpBtn: document.getElementById("helpBtn"),
+  helpModal: document.getElementById("helpModal"),
+  closeHelp: document.getElementById("closeHelp"),
+
+  toast: document.getElementById("toast"),
+};
+
+function showToast(msg) {
+  els.toast.textContent = msg;
+  els.toast.classList.add("show");
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => els.toast.classList.remove("show"), 1600);
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return DEFAULT_STATE();
+    const parsed = JSON.parse(raw);
+    // Basic shape validation
+    if (!parsed || !parsed.items) return DEFAULT_STATE();
+    for (const k of ["S","W","O","T"]) {
+      if (!Array.isArray(parsed.items[k])) parsed.items[k] = [];
+      if (parsed.items[k].length === 0) parsed.items[k].push(newItem(k));
+      // normalize item fields
+      parsed.items[k] = parsed.items[k].map(it => ({
+        ...newItem(k),
+        ...it,
+        type: k,
+        impact: clamp(it.impact ?? 3, 1, 5),
+        confidence: clamp(it.confidence ?? 3, 1, 5),
+        urgency: clamp(it.urgency ?? 3, 1, 5),
+      }));
+    }
+    parsed.scoringEnabled = !!parsed.scoringEnabled;
+    parsed.projectName = (parsed.projectName ?? "").toString();
+    return parsed;
+  } catch {
+    return DEFAULT_STATE();
+  }
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  els.saveState.textContent = "saved";
+  clearTimeout(saveState._t);
+  saveState._t = setTimeout(() => els.saveState.textContent = "on", 800);
+}
+
+// Debounced saves keep typing smooth on mobile
+let _saveT = null;
+function saveStateDebounced(){
+  clearTimeout(_saveT);
+  _saveT = setTimeout(() => {
+    try { saveState(); } catch {}
+  }, 250);
+}
+
+
+function render() {
+  // header
+  els.projectName.value = state.projectName;
+  els.scoringToggle.checked = state.scoringEnabled;
+
+  // lists
+  for (const type of ["S","W","O","T"]) {
+    const container = document.querySelector(`[data-list="${type}"]`);
+    container.innerHTML = "";
+    state.items[type].forEach((it, idx) => {
+      container.appendChild(renderItem(it, idx));
+    });
+  }
+
+  // hide/show score blocks
+  document.querySelectorAll(".scores").forEach(el => {
+    el.style.display = state.scoringEnabled ? "grid" : "none";
+  });
+
+  // summary
+  renderSummaryAndTows();
+}
+
+function renderItem(it, idx) {
+  const wrap = document.createElement("div");
+  wrap.className = "item";
+  wrap.dataset.id = it.id;
+
+  const row = document.createElement("div");
+  row.className = "row";
+
+  const left = document.createElement("div");
+  left.className = "grow";
+
+  const ta = document.createElement("textarea");
+  ta.placeholder = placeholderFor(it.type);
+  ta.value = it.text || "";
+  ta.addEventListener("input", () => {
+    it.text = ta.value;
+    saveState();
+    renderSummaryAndTows();
+  });
+
+  const scores = document.createElement("div");
+  scores.className = "scores";
+
+  scores.appendChild(scoreInput("Impact", it, "impact", () => { s.textContent = state.scoringEnabled ? `score: ${scoreOf(it)}` : "qualitative"; }));
+  scores.appendChild(scoreInput("Confidence", it, "confidence", () => { s.textContent = state.scoringEnabled ? `score: ${scoreOf(it)}` : "qualitative"; }));
+  scores.appendChild(scoreInput("Urgency", it, "urgency", () => { s.textContent = state.scoringEnabled ? `score: ${scoreOf(it)}` : "qualitative"; }));
+
+  const meta = document.createElement("div");
+  meta.className = "meta";
+
+  const s = document.createElement("span");
+  s.className = "pill";
+  s.textContent = state.scoringEnabled ? `score: ${scoreOf(it)}` : "qualitative";
+  meta.appendChild(s);
+
+  const t = document.createElement("span");
+  t.className = "pill";
+  t.textContent = `#${idx + 1}`;
+  meta.appendChild(t);
+
+  left.appendChild(ta);
+  left.appendChild(scores);
+  left.appendChild(meta);
+
+  const tools = document.createElement("div");
+  tools.className = "tools";
+
+  const up = document.createElement("button");
+  up.className = "mini";
+  up.title = "Move up";
+  up.innerHTML = "↑";
+  up.addEventListener("click", () => moveItem(it.type, it.id, -1));
+
+  const down = document.createElement("button");
+  down.className = "mini";
+  down.title = "Move down";
+  down.innerHTML = "↓";
+  down.addEventListener("click", () => moveItem(it.type, it.id, +1));
+
+  const del = document.createElement("button");
+  del.className = "mini danger";
+  del.title = "Delete";
+  del.innerHTML = "✕";
+  del.addEventListener("click", () => deleteItem(it.type, it.id));
+
+  tools.appendChild(up);
+  tools.appendChild(down);
+  tools.appendChild(del);
+
+  row.appendChild(left);
+  row.appendChild(tools);
+
+  wrap.appendChild(row);
+  return wrap;
+}
+
+function placeholderFor(type){
+  const map = {
+    S: "Example: Strong distribution network in the Bay Area with 2-day delivery.",
+    W: "Example: Limited QA capacity; regression cycles take 10+ days.",
+    O: "Example: Growing demand for AI-assisted reporting tools in SMB market.",
+    T: "Example: Competitors lowering prices and bundling similar features."
+  };
+  return map[type] || "Write one specific item…";
+}
+
+function scoreInput(label, it, key, onUpdate) {
+  const box = document.createElement("div");
+  box.className = "scorebox";
+  const l = document.createElement("label");
+  l.textContent = `${label} (1–5)`;
+  const inp = document.createElement("input");
+  inp.type = "number";
+  inp.min = "1";
+  inp.max = "5";
+  inp.step = "1";
+  inp.inputMode = "numeric"; // better iOS keypad
+  inp.value = it[key];
+
+  // IMPORTANT (mobile): do NOT re-render on every keystroke (it kills focus).
+  inp.addEventListener("input", () => {
+    it[key] = clamp(inp.value, 1, 5);
+    saveStateDebounced();
+    if (typeof onUpdate === "function") onUpdate();
+    renderSummaryAndTows();
+  });
+
+  inp.addEventListener("change", () => {
+    // Normalize on commit
+    it[key] = clamp(inp.value, 1, 5);
+    inp.value = it[key];
+    saveState();
+    if (typeof onUpdate === "function") onUpdate();
+    renderSummaryAndTows();
+  });
+
+  box.appendChild(l);
+  box.appendChild(inp);
+  return box;
+}
+
+function addItem(type){
+  state.items[type].push(newItem(type));
+  saveState();
+  render();
+  // focus last textarea
+  const list = document.querySelector(`[data-list="${type}"]`);
+  const last = list.querySelector(".item:last-child textarea");
+  if (last) last.focus();
+}
+
+function deleteItem(type, id){
+  const arr = state.items[type];
+  const idx = arr.findIndex(x => x.id === id);
+  if (idx >= 0) arr.splice(idx, 1);
+  if (arr.length === 0) arr.push(newItem(type));
+  saveState();
+  render();
+  showToast("Deleted");
+}
+
+function moveItem(type, id, dir){
+  const arr = state.items[type];
+  const idx = arr.findIndex(x => x.id === id);
+  const j = idx + dir;
+  if (idx < 0 || j < 0 || j >= arr.length) return;
+  [arr[idx], arr[j]] = [arr[j], arr[idx]];
+  saveState();
+  render();
+}
+
+function normalizedItems(type){
+  const arr = state.items[type].map(it => ({
+    ...it,
+    cleanText: (it.text || "").trim()
+  })).filter(it => it.cleanText.length > 0);
+
+  if (!state.scoringEnabled) return arr;
+
+  // score-based ordering, tie-break by recency
+  return arr.sort((a,b) => {
+    const ds = scoreOf(b) - scoreOf(a);
+    if (ds !== 0) return ds;
+    return (b.createdAt || 0) - (a.createdAt || 0);
+  });
+}
+
+function renderSummaryAndTows(){
+  const S = normalizedItems("S");
+  const W = normalizedItems("W");
+  const O = normalizedItems("O");
+  const T = normalizedItems("T");
+
+  // KPIs
+  const kpiData = [
+    { n: S.length, l: "Strengths" },
+    { n: W.length, l: "Weaknesses" },
+    { n: O.length, l: "Opportunities" },
+    { n: T.length, l: "Threats" },
+  ];
+
+  els.kpis.innerHTML = "";
+  for (const k of kpiData){
+    const box = document.createElement("div");
+    box.className = "kpi";
+    const n = document.createElement("div");
+    n.className = "n";
+    n.textContent = k.n;
+    const l = document.createElement("div");
+    l.className = "l";
+    l.textContent = k.l;
+    box.appendChild(n);
+    box.appendChild(l);
+    els.kpis.appendChild(box);
+  }
+
+  // Top items (overall)
+  const all = [...S, ...W, ...O, ...T].map(it => ({
+    ...it,
+    score: state.scoringEnabled ? scoreOf(it) : null
+  }));
+
+  const sorted = state.scoringEnabled
+    ? all.sort((a,b) => (b.score ?? 0) - (a.score ?? 0))
+    : all; // keep natural order if not scoring
+
+  els.topItems.innerHTML = "";
+  sorted.slice(0, 6).forEach(it => {
+    const li = document.createElement("li");
+    const label = quadName(it.type);
+    const scoreTxt = state.scoringEnabled ? ` — ${it.score}` : "";
+    li.textContent = `[${label}] ${it.cleanText || "(empty)"}` + scoreTxt;
+    els.topItems.appendChild(li);
+  });
+  if (sorted.length === 0){
+    const li = document.createElement("li");
+    li.textContent = "Add a few items to see ranked highlights.";
+    els.topItems.appendChild(li);
+  }
+
+  // TOWS generation
+  const topS = S.slice(0,3);
+  const topW = W.slice(0,3);
+  const topO = O.slice(0,3);
+  const topT = T.slice(0,3);
+
+  fillList(els.soList, pairIdeas("SO", topS, topO));
+  fillList(els.stList, pairIdeas("ST", topS, topT));
+  fillList(els.woList, pairIdeas("WO", topW, topO));
+  fillList(els.wtList, pairIdeas("WT", topW, topT));
+}
+
+function quadName(type){
+  return ({S:"Strength", W:"Weakness", O:"Opportunity", T:"Threat"})[type] || type;
+}
+
+function pairIdeas(mode, A, B){
+  // Generate up to 5 prompt-style action ideas
+  const ideas = [];
+  const limit = 5;
+  for (let i=0; i<A.length; i++){
+    for (let j=0; j<B.length; j++){
+      if (ideas.length >= limit) break;
+      const a = A[i].cleanText;
+      const b = B[j].cleanText;
+      if (!a || !b) continue;
+
+      if (mode === "SO") ideas.push(`Leverage "${a}" to capitalize on "${b}".`);
+      if (mode === "ST") ideas.push(`Use "${a}" to reduce risk from "${b}".`);
+      if (mode === "WO") ideas.push(`Address "${a}" to unlock "${b}".`);
+      if (mode === "WT") ideas.push(`Minimize "${a}" to avoid impact from "${b}".`);
+    }
+    if (ideas.length >= limit) break;
+  }
+  if (ideas.length === 0){
+    return ["Add a few items in both quadrants to generate strategy prompts."];
+  }
+  return ideas;
+}
+
+function fillList(ul, lines){
+  ul.innerHTML = "";
+  lines.forEach(x => {
+    const li = document.createElement("li");
+    li.textContent = x;
+    ul.appendChild(li);
+  });
+}
+
+/* ======= Actions ======= */
+document.querySelectorAll("[data-add]").forEach(btn => {
+  btn.addEventListener("click", () => addItem(btn.dataset.add));
+});
+
+els.projectName.addEventListener("input", () => {
+  state.projectName = els.projectName.value;
+  saveState();
+});
+
+els.scoringToggle.addEventListener("change", () => {
+  state.scoringEnabled = els.scoringToggle.checked;
+  saveState();
+  render();
+});
+
+els.exportBtn.addEventListener("click", exportJSON);
+els.importBtn.addEventListener("click", () => els.fileInput.click());
+els.fileInput.addEventListener("change", importJSON);
+
+els.printBtn.addEventListener("click", () => window.print());
+
+els.resetBtn.addEventListener("click", () => {
+  const ok = confirm("Reset everything? This clears only this browser's saved SWOT.");
+  if (!ok) return;
+  state = DEFAULT_STATE();
+  saveState();
+  render();
+  showToast("Reset");
+});
+
+els.helpBtn.addEventListener("click", () => els.helpModal.showModal());
+els.closeHelp.addEventListener("click", () => els.helpModal.close());
+
+window.addEventListener("keydown", (e) => {
+  // Help
+  if (e.key.toLowerCase() === "h" && !isTypingContext(e.target)) {
+    e.preventDefault();
+    els.helpModal.open ? els.helpModal.close() : els.helpModal.showModal();
+  }
+  // Ctrl/Cmd + S => export
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+    e.preventDefault();
+    exportJSON();
+  }
+});
+
+function isTypingContext(el){
+  if (!el) return false;
+  const tag = (el.tagName || "").toLowerCase();
+  return tag === "textarea" || tag === "input" || el.isContentEditable;
+}
+
+function exportJSON(){
+  const data = {
+    ...state,
+    exportedAt: new Date().toISOString(),
+    version: "1.0"
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json"});
+  const name = (state.projectName || "swot").trim().replace(/[^\w\-]+/g,"_").slice(0,40) || "swot";
+  downloadBlob(blob, `${name}_SWOT.json`);
+  showToast("Exported JSON");
+}
+
+function importJSON(){
+  const file = els.fileInput.files && els.fileInput.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const parsed = JSON.parse(reader.result);
+      // Merge into defaults safely
+      const next = DEFAULT_STATE();
+      next.projectName = (parsed.projectName ?? "").toString();
+      next.scoringEnabled = !!parsed.scoringEnabled;
+
+      if (parsed.items){
+        for (const k of ["S","W","O","T"]){
+          if (Array.isArray(parsed.items[k]) && parsed.items[k].length){
+            next.items[k] = parsed.items[k].map(it => ({
+              ...newItem(k),
+              ...it,
+              type: k,
+              impact: clamp(it.impact ?? 3, 1, 5),
+              confidence: clamp(it.confidence ?? 3, 1, 5),
+              urgency: clamp(it.urgency ?? 3, 1, 5),
+            }));
+          }
+        }
+      }
+      state = next;
+      saveState();
+      render();
+      showToast("Imported");
+    }catch{
+      alert("Could not import. Please select a valid SWOT JSON export.");
+    }finally{
+      els.fileInput.value = "";
+    }
+  };
+  reader.readAsText(file);
+}
+
+function downloadBlob(blob, filename){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+/* ======= Init ======= */
+render();
+saveState();
+</script>
+</body>
+</html>
